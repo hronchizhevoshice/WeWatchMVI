@@ -1,28 +1,63 @@
 package com.example.wewatchmvi
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.wewatchmvi.data.MovieRepository
+import com.example.wewatchmvi.ui.MainEffect
+import com.example.wewatchmvi.ui.MainIntent
+import com.example.wewatchmvi.ui.MainState
+import com.example.wewatchmvi.ui.MainViewModel
+import com.example.wewatchmvi.ui.Screen
+import com.example.wewatchmvi.ui.screens.AddScreen
+import com.example.wewatchmvi.ui.screens.MainScreen
+import com.example.wewatchmvi.ui.screens.SearchScreen
 import com.example.wewatchmvi.ui.theme.WeWatchMVITheme
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         setContent {
             WeWatchMVITheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                val repository = MovieRepository(applicationContext)
+                val viewModel: MainViewModel = viewModel(
+                    factory = MainViewModelFactory(repository)
+                )
+
+                val state by viewModel.state.collectAsState()
+
+                // Обрабатываем эффекты
+                LaunchedEffect(Unit) {
+                    viewModel.effect.collect { effect ->
+                        when (effect) {
+                            is MainEffect.ShowError -> {
+                                Toast.makeText(this@MainActivity, effect.message, Toast.LENGTH_SHORT).show()
+                            }
+                            else -> { /* навигация через state */ }
+                        }
+                    }
+                }
+
+                // Отображаем текущий экран
+                when (state.currentScreen) {
+                    Screen.MAIN -> MainScreen(
+                        state = state,
+                        onIntent = viewModel::handleIntent
+                    )
+                    Screen.ADD -> AddScreen(
+                        state = state,
+                        onIntent = viewModel::handleIntent
+                    )
+                    Screen.SEARCH -> SearchScreen(
+                        state = state,
+                        onIntent = viewModel::handleIntent
                     )
                 }
             }
@@ -30,18 +65,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    WeWatchMVITheme {
-        Greeting("Android")
+// Factory для ViewModel
+class MainViewModelFactory(
+    private val repository: MovieRepository
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return MainViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
