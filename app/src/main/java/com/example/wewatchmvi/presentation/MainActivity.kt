@@ -8,7 +8,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.wewatchmvi.data.MovieRepository
+import com.example.wewatchmvi.data.MovieRepositoryImpl
 import com.example.wewatchmvi.presentation.screens.AddScreen
 import com.example.wewatchmvi.presentation.screens.MainScreen
 import com.example.wewatchmvi.presentation.screens.SearchScreen
@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WeWatchMVITheme {
-                val repository = MovieRepository(applicationContext)
+                val repository = MovieRepositoryImpl(applicationContext)
                 val viewModel: MainViewModel = viewModel(
                     factory = MainViewModelFactory(repository)
                 )
@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
 
 // Factory для ViewModel
 class MainViewModelFactory(
-    private val repository: MovieRepository
+    private val repository: MovieRepositoryImpl
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {

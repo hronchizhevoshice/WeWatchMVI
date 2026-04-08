@@ -2,13 +2,13 @@ package com.example.wewatchmvi.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wewatchmvi.data.MovieRepository
+import com.example.wewatchmvi.data.MovieRepositoryImpl
 import com.example.wewatchmvi.domain.model.Movie
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class MainViewModel(
-    private val repository: MovieRepository
+    private val repository: MovieRepositoryImpl
 ) : ViewModel() {
 
     // Состояние
