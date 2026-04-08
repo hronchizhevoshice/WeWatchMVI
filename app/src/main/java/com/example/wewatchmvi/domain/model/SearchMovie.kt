@@ -1,4 +1,4 @@
-package com.example.wewatchmvi.model
+package com.example.wewatchmvi.domain.model
 
 data class SearchMovie(
     val Title: String,

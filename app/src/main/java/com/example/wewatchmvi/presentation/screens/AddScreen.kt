@@ -1,4 +1,4 @@
-package com.example.wewatchmvi.ui.screens
+package com.example.wewatchmvi.presentation.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -16,10 +16,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.example.wewatchmvi.model.Movie
-import com.example.wewatchmvi.model.MovieDetails
-import com.example.wewatchmvi.ui.MainIntent
-import com.example.wewatchmvi.ui.MainState
+import com.example.wewatchmvi.domain.model.Movie
+import com.example.wewatchmvi.presentation.MainIntent
+import com.example.wewatchmvi.presentation.MainState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

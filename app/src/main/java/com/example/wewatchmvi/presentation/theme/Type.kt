@@ -1,4 +1,4 @@
-package com.example.wewatchmvi.ui.theme
+package com.example.wewatchmvi.presentation.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

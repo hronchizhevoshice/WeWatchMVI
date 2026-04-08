@@ -1,10 +1,10 @@
 package com.example.wewatchmvi.data
 
 import android.content.Context
-import com.example.wewatchmvi.api.RetrofitClient
-import com.example.wewatchmvi.model.Movie
-import com.example.wewatchmvi.model.MovieDetails
-import com.example.wewatchmvi.model.SearchMovie
+import com.example.wewatchmvi.data.local.MovieDatabase
+import com.example.wewatchmvi.data.remote.RetrofitClient
+import com.example.wewatchmvi.domain.model.Movie
+import com.example.wewatchmvi.domain.model.MovieDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext

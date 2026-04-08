@@ -1,10 +1,10 @@
-package com.example.wewatchmvi.data
+package com.example.wewatchmvi.data.local
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.wewatchmvi.model.Movie
+import com.example.wewatchmvi.domain.model.Movie
 
 @Database(entities = [Movie::class], version = 1, exportSchema = false)
 abstract class MovieDatabase : RoomDatabase() {

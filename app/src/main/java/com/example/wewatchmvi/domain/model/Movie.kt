@@ -1,4 +1,4 @@
-package com.example.wewatchmvi.model
+package com.example.wewatchmvi.domain.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -1,7 +1,7 @@
-package com.example.wewatchmvi.data
+package com.example.wewatchmvi.data.local
 
 import androidx.room.*
-import com.example.wewatchmvi.model.Movie
+import com.example.wewatchmvi.domain.model.Movie
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -1,4 +1,4 @@
-package com.example.wewatchmvi
+package com.example.wewatchmvi.presentation
 
 import android.os.Bundle
 import android.widget.Toast
@@ -9,15 +9,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.wewatchmvi.data.MovieRepository
-import com.example.wewatchmvi.ui.MainEffect
-import com.example.wewatchmvi.ui.MainIntent
-import com.example.wewatchmvi.ui.MainState
-import com.example.wewatchmvi.ui.MainViewModel
-import com.example.wewatchmvi.ui.Screen
-import com.example.wewatchmvi.ui.screens.AddScreen
-import com.example.wewatchmvi.ui.screens.MainScreen
-import com.example.wewatchmvi.ui.screens.SearchScreen
-import com.example.wewatchmvi.ui.theme.WeWatchMVITheme
+import com.example.wewatchmvi.presentation.screens.AddScreen
+import com.example.wewatchmvi.presentation.screens.MainScreen
+import com.example.wewatchmvi.presentation.screens.SearchScreen
+import com.example.wewatchmvi.presentation.theme.WeWatchMVITheme
 
 class MainActivity : ComponentActivity() {
 

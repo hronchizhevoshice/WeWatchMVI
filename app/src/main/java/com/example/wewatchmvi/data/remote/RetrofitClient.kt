@@ -1,4 +1,4 @@
-package com.example.wewatchmvi.api
+package com.example.wewatchmvi.data.remote
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

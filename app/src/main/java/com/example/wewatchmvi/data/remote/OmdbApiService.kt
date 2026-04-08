@@ -1,7 +1,7 @@
-package com.example.wewatchmvi.api
+package com.example.wewatchmvi.data.remote
 
-import com.example.wewatchmvi.model.MovieDetails
-import com.example.wewatchmvi.model.SearchResponse
+import com.example.wewatchmvi.domain.model.MovieDetails
+import com.example.wewatchmvi.domain.model.SearchResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 

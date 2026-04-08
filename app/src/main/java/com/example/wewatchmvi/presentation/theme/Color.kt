@@ -1,4 +1,4 @@
-package com.example.wewatchmvi.ui.theme
+package com.example.wewatchmvi.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 

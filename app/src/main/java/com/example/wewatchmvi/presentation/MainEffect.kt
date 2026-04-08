@@ -1,6 +1,6 @@
-package com.example.wewatchmvi.ui
+package com.example.wewatchmvi.presentation
 
-import com.example.wewatchmvi.model.Movie
+import com.example.wewatchmvi.domain.model.Movie
 
 sealed class MainEffect {
     object NavigateToMain : MainEffect()
