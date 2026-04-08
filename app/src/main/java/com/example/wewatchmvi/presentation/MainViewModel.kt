@@ -2,20 +2,23 @@ package com.example.wewatchmvi.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wewatchmvi.data.MovieRepositoryImpl
 import com.example.wewatchmvi.domain.model.Movie
+import com.example.wewatchmvi.domain.usecase.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class MainViewModel(
-    private val repository: MovieRepositoryImpl
+    private val getMoviesUseCase: GetMoviesUseCase,
+    private val addMovieUseCase: AddMovieUseCase,
+    private val toggleMovieSelectionUseCase: ToggleMovieSelectionUseCase,
+    private val deleteMoviesUseCase: DeleteMoviesUseCase,
+    private val searchMoviesUseCase: SearchMoviesUseCase,
+    private val getMovieDetailsUseCase: GetMovieDetailsUseCase
 ) : ViewModel() {
 
-    // Состояние
     private val _state = MutableStateFlow(MainState())
     val state: StateFlow<MainState> = _state.asStateFlow()
 
-    // Эффекты (одноразовые события)
     private val _effect = MutableSharedFlow<MainEffect>()
     val effect: SharedFlow<MainEffect> = _effect.asSharedFlow()
 
@@ -33,23 +36,21 @@ class MainViewModel(
             is MainIntent.NavigateToEdit -> navigateToEdit(intent.movie)
             is MainIntent.ToggleMovieSelection -> toggleMovieSelection(intent.movie)
             is MainIntent.ShowDeleteDialog -> showDeleteDialog()
-            is MainIntent.ConfirmDelete -> confirmDelete()
             is MainIntent.DismissDeleteDialog -> dismissDeleteDialog()
+            is MainIntent.ConfirmDelete -> confirmDelete()
             is MainIntent.NavigateBack -> navigateBack()
             is MainIntent.NavigateToSearch -> navigateToSearch()
             is MainIntent.GetMovieDetails -> getMovieDetails(intent.imdbID)
         }
     }
 
-    // --- Обработчики ---
-
     private fun loadMovies() {
         viewModelScope.launch {
-            repository.allMovies.collect { moviesList ->
+            getMoviesUseCase().collect { movies ->
                 _state.update { currentState ->
                     currentState.copy(
-                        movies = moviesList,
-                        selectedCount = moviesList.count { it.isSelected }
+                        movies = movies,
+                        selectedCount = movies.count { it.isSelected }
                     )
                 }
             }
@@ -59,53 +60,42 @@ class MainViewModel(
     private fun searchMovies(query: String, year: String?) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
-
             try {
-                val results = repository.searchMovies(query, year)
+                val results = searchMoviesUseCase(query, year)
                 _state.update {
                     it.copy(
-                        searchResults = results,
+                        searchResults = results.map { searchMovie ->
+                            Movie(
+                                title = searchMovie.title,
+                                year = searchMovie.year,
+                                posterUrl = searchMovie.posterUrl,
+                                imdbID = searchMovie.imdbID
+                            )
+                        },
                         isLoading = false,
                         errorMessage = if (results.isEmpty()) "Фильмы не найдены" else null
                     )
                 }
             } catch (e: Exception) {
                 _state.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = "Ошибка: ${e.message}"
-                    )
+                    it.copy(isLoading = false, errorMessage = "Ошибка: ${e.message}")
                 }
-                _effect.emit(MainEffect.ShowError("Ошибка: ${e.message}"))
             }
-        }
-    }
-
-    private fun clearSearchResults() {
-        _state.update {
-            it.copy(
-                searchResults = emptyList(),
-                errorMessage = null
-            )
         }
     }
 
     private fun addMovie(movie: Movie) {
         viewModelScope.launch {
-            repository.insertMovie(movie)
+            addMovieUseCase(movie)
             _state.update {
-                it.copy(
-                    currentScreen = Screen.MAIN,
-                    selectedMovieDetails = null
-                )
+                it.copy(currentScreen = Screen.MAIN, selectedMovieDetails = null)
             }
-            _effect.emit(MainEffect.NavigateToMain)
         }
     }
 
     private fun toggleMovieSelection(movie: Movie) {
         viewModelScope.launch {
-            repository.updateMovie(movie.copy(isSelected = !movie.isSelected))
+            toggleMovieSelectionUseCase(movie)
         }
     }
 
@@ -113,98 +103,71 @@ class MainViewModel(
         _state.update { it.copy(isDeleteDialogVisible = true) }
     }
 
-    private fun confirmDelete() {
-        viewModelScope.launch {
-            try {
-                repository.deleteSelectedMovies()
-                _state.update {
-                    it.copy(isDeleteDialogVisible = false)
-                }
-            } catch (e: Exception) {
-                _state.update { it.copy(isDeleteDialogVisible = false) }
-                _effect.emit(MainEffect.ShowError("Ошибка при удалении: ${e.message}"))
-            }
-        }
-    }
-
     private fun dismissDeleteDialog() {
         _state.update { it.copy(isDeleteDialogVisible = false) }
     }
 
-    private fun navigateToAdd() {
+    private fun confirmDelete() {
         viewModelScope.launch {
-            _state.update { it.copy(currentScreen = Screen.ADD, selectedMovieDetails = null) }
-            _effect.emit(MainEffect.NavigateToAdd(null))
-        }
-    }
-
-    private fun navigateToEdit(movie: Movie) {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    currentScreen = Screen.ADD,
-                    selectedMovieDetails = movie
-                )
-            }
-            _effect.emit(MainEffect.NavigateToAdd(movie))
-        }
-    }
-
-    private fun navigateToSearch() {
-        viewModelScope.launch {
-            _state.update { it.copy(currentScreen = Screen.SEARCH) }
-            _effect.emit(MainEffect.NavigateToSearch)
+            deleteMoviesUseCase()
+            _state.update { it.copy(isDeleteDialogVisible = false) }
         }
     }
 
     private fun getMovieDetails(imdbID: String) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
-            try {
-                val details = repository.getMovieDetails(imdbID)
-                details?.let {
-                    val movie = Movie(
-                        title = it.Title,
-                        year = it.Year,
-                        posterUrl = it.Poster,
-                        imdbID = it.imdbID,
-                        genre = it.Genre,
-                        isSelected = false
+            val movie = getMovieDetailsUseCase(imdbID)
+            movie?.let {
+                _state.update { currentState ->
+                    currentState.copy(
+                        searchQuery = it.title,
+                        searchYear = it.year,
+                        selectedMovieDetails = it,
+                        isLoading = false
                     )
-                    _state.update { currentState ->
-                        currentState.copy(
-                            searchQuery = movie.title,
-                            searchYear = movie.year,
-                            selectedMovieDetails = movie,
-                            isLoading = false
-                        )
-                    }
                 }
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
         }
     }
 
+    private fun clearSearchResults() {
+        _state.update {
+            it.copy(searchResults = emptyList(), errorMessage = null)
+        }
+    }
+
+    private fun navigateToAdd() {
+        _state.update { it.copy(currentScreen = Screen.ADD, selectedMovieDetails = null, searchQuery = "", searchYear = "") }
+    }
+
+    private fun navigateToEdit(movie: Movie) {
+        _state.update {
+            it.copy(
+                currentScreen = Screen.ADD,
+                selectedMovieDetails = movie,
+                searchQuery = movie.title,
+                searchYear = movie.year
+            )
+        }
+    }
+
+    private fun navigateToSearch() {
+        _state.update { it.copy(currentScreen = Screen.SEARCH) }
+    }
+
     private fun navigateBack() {
-        viewModelScope.launch {
-            when (_state.value.currentScreen) {
-                Screen.ADD -> _state.update {
-                    it.copy(
-                        currentScreen = Screen.MAIN,
-                        selectedMovieDetails = null,
-                        searchQuery = "",
-                        searchYear = ""
-                    )
-                }
-                Screen.SEARCH -> _state.update {
-                    it.copy(
-                        currentScreen = Screen.ADD
-                    )
-                }
-                else -> _state.update { it.copy(currentScreen = Screen.MAIN) }
+        when (_state.value.currentScreen) {
+            Screen.ADD -> _state.update {
+                it.copy(
+                    currentScreen = Screen.MAIN,
+                    selectedMovieDetails = null,
+                    searchQuery = "",
+                    searchYear = ""
+                )
             }
-            _effect.emit(MainEffect.NavigateBack)
+            Screen.SEARCH -> _state.update { it.copy(currentScreen = Screen.ADD) }
+            Screen.MAIN -> _state.update { it.copy(currentScreen = Screen.MAIN) }
         }
     }
 }
