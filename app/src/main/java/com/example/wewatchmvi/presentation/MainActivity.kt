@@ -8,7 +8,11 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.wewatchmvi.data.MovieRepositoryImpl
+import com.example.wewatchmvi.data.local.MovieDatabase
+import com.example.wewatchmvi.data.remote.RetrofitClient
+import com.example.wewatchmvi.data.repository.MovieRepositoryImpl
+import com.example.wewatchmvi.domain.repository.MovieRepository
+import com.example.wewatchmvi.domain.usecase.*
 import com.example.wewatchmvi.presentation.screens.AddScreen
 import com.example.wewatchmvi.presentation.screens.MainScreen
 import com.example.wewatchmvi.presentation.screens.SearchScreen
@@ -21,14 +25,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WeWatchMVITheme {
-                val repository = MovieRepositoryImpl(applicationContext)
+                val repository = provideMovieRepository()
                 val viewModel: MainViewModel = viewModel(
                     factory = MainViewModelFactory(repository)
                 )
 
                 val state by viewModel.state.collectAsState()
 
-                // Обрабатываем эффекты
                 LaunchedEffect(Unit) {
                     viewModel.effect.collect { effect ->
                         when (effect) {
@@ -40,7 +43,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Отображаем текущий экран
                 when (state.currentScreen) {
                     Screen.MAIN -> MainScreen(
                         state = state,
@@ -58,16 +60,30 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun provideMovieRepository(): MovieRepository {
+        val database = MovieDatabase.getDatabase(this)
+        val movieDao = database.movieDao()
+        val apiService = RetrofitClient.instance
+        val apiKey = RetrofitClient.API_KEY
+        return MovieRepositoryImpl(movieDao, apiService, apiKey)
+    }
 }
 
-// Factory для ViewModel
 class MainViewModelFactory(
-    private val repository: MovieRepositoryImpl
+    private val repository: MovieRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(repository) as T
+            return MainViewModel(
+                getMoviesUseCase = GetMoviesUseCase(repository),
+                addMovieUseCase = AddMovieUseCase(repository),
+                toggleMovieSelectionUseCase = ToggleMovieSelectionUseCase(repository),
+                deleteMoviesUseCase = DeleteMoviesUseCase(repository),
+                searchMoviesUseCase = SearchMoviesUseCase(repository),
+                getMovieDetailsUseCase = GetMovieDetailsUseCase(repository)
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
